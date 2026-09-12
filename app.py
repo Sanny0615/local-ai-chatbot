@@ -9,7 +9,6 @@ import ollama
 st.markdown("""
 <style>
 
-    /* Main background */
     .stApp {
         background:
             radial-gradient(
@@ -33,14 +32,12 @@ st.markdown("""
     }
 
 
-    /* Main content */
     .main .block-container {
         max-width: 900px;
         padding-top: 2rem;
     }
 
 
-    /* Title */
     h1 {
         text-align: center;
 
@@ -64,7 +61,6 @@ st.markdown("""
     }
 
 
-    /* Subtitle */
     .subtitle {
         text-align: center;
 
@@ -75,7 +71,6 @@ st.markdown("""
     }
 
 
-    /* Sidebar */
     section[data-testid="stSidebar"] {
         background: linear-gradient(
             180deg,
@@ -92,7 +87,6 @@ st.markdown("""
     }
 
 
-    /* Chat messages */
     [data-testid="stChatMessage"] {
         border-radius: 16px;
 
@@ -108,7 +102,6 @@ st.markdown("""
     }
 
 
-    /* User message */
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-user"]
     ) {
@@ -122,7 +115,6 @@ st.markdown("""
     }
 
 
-    /* Assistant message */
     [data-testid="stChatMessage"]:has(
         [data-testid="chatAvatarIcon-assistant"]
     ) {
@@ -136,7 +128,6 @@ st.markdown("""
     }
 
 
-    /* Chat input */
     [data-testid="stChatInput"] {
         border: 1px solid rgba(168, 85, 247, 0.45);
 
@@ -148,7 +139,6 @@ st.markdown("""
     }
 
 
-    /* Buttons */
     .stButton > button {
         width: 100%;
 
@@ -180,13 +170,11 @@ st.markdown("""
     }
 
 
-    /* Slider */
     div[data-baseweb="slider"] div[role="slider"] {
         background-color: #c084fc;
     }
 
 
-    /* Footer */
     .status {
         text-align: center;
 
@@ -254,7 +242,7 @@ if "messages" not in st.session_state:
 
 
 # =========================================================
-# DISPLAY PREVIOUS MESSAGES
+# DISPLAY OLD MESSAGES
 # =========================================================
 
 for message in st.session_state.messages:
@@ -279,11 +267,11 @@ question = st.chat_input(
 
 if question:
 
-    # Display user question
+    # Display user message
     st.chat_message("user").write(question)
 
 
-    # Store user question
+    # Store user message
     st.session_state.messages.append({
         "role": "user",
         "content": question
@@ -291,7 +279,7 @@ if question:
 
 
     # =====================================================
-    # OLLAMA REQUEST
+    # OLLAMA STREAMING REQUEST
     # =====================================================
 
     response = ollama.chat(
@@ -321,22 +309,28 @@ if question:
 
         options={
             "temperature": temperature
-        }
+        },
+
+        stream=True
     )
 
 
     # =====================================================
-    # EXTRACT AI ANSWER
+    # DISPLAY STREAMING RESPONSE
     # =====================================================
 
-    answer = response["message"]["content"]
+    with st.chat_message("assistant"):
+
+        answer = st.write_stream(
+            chunk["message"]["content"]
+            for chunk in response
+        )
 
 
-    # Display AI answer
-    st.chat_message("assistant").write(answer)
+    # =====================================================
+    # STORE COMPLETE AI ANSWER
+    # =====================================================
 
-
-    # Store AI answer
     st.session_state.messages.append({
         "role": "assistant",
         "content": answer
